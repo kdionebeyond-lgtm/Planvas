@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planvas — Your Lesson Plan, On Canvas</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+<script>
+// Fallback: if CDN blocked, load from unpkg
+window.addEventListener('load', function() {
+  if (typeof mammoth === 'undefined') {
+    var s = document.createElement('script');
+    s.src = 'https://unpkg.com/mammoth@1.8.0/mammoth.browser.min.js';
+    document.head.appendChild(s);
+  }
+});
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0b12;--surface:#13131e;--surface2:#1c1c2e;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --pink:#e91e8c;--cyan:#00e5ff;--green:#39ff14;--purple:#7C5CBF;
+  --white:#f0eef8;--muted:#6b6b8a;
+  --radius:14px;--radius-sm:8px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--white);min-height:100vh;overflow-x:hidden}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:rgba(11,11,18,0.96);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:11px}
+.logo-icon{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#7C5CBF,var(--pink));display:flex;align-items:center;justify-content:center;font-size:17px}
+.logo-text{font-family:'Playfair Display',serif;font-size:19px}
+.logo-text span{color:var(--pink)}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:1px}
+.badge{background:rgba(124,92,191,0.15);color:#9B7DE0;border:1px solid rgba(124,92,191,0.3);border-radius:20px;padding:4px 13px;font-size:11px;font-weight:600}
+
+/* STEPS */
+.steps{display:flex;align-items:center;justify-content:center;padding:24px 32px 0;gap:0}
+.step{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500;color:var(--muted);transition:color .3s}
+.step.active{color:var(--white)}.step.done{color:var(--pink)}
+.step-num{width:27px;height:27px;border-radius:50%;border:2px solid var(--muted);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .3s}
+.step.active .step-num{border-color:#9B7DE0;color:#9B7DE0;background:rgba(124,92,191,0.1)}
+.step.done .step-num{border-color:var(--pink);background:var(--pink);color:#fff}
+.step-line{width:56px;height:1px;background:var(--border);margin:0 7px}
+
+/* MAIN */
+.main{max-width:920px;margin:0 auto;padding:32px 22px 80px}
+.screen{display:none;animation:fadeIn .32s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.section-head{margin-bottom:24px}
+.section-head h2{font-family:'Playfair Display',serif;font-size:30px;line-height:1.2;margin-bottom:6px}
+.section-head p{color:var(--muted);font-size:14px;line-height:1.6}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:14px}
+
+/* UPLOAD */
+.upload-bar{display:flex;gap:9px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.upload-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--muted);border-radius:var(--radius-sm);padding:8px 16px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;transition:all .2s}
+.upload-btn:hover{border-color:#9B7DE0;color:var(--white)}
+.divider-text{color:var(--muted);font-size:12px}
+
+textarea{width:100%;height:220px;background:#0d0d18;border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;padding:14px;resize:vertical;outline:none;line-height:1.65;transition:border-color .2s}
+textarea:focus{border-color:#7C5CBF}
+textarea::placeholder{color:var(--muted)}
+
+/* BUTTONS */
+.btn-primary{width:100%;padding:14px;background:linear-gradient(135deg,#7C5CBF,var(--pink));color:#fff;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px;letter-spacing:.3px;transition:opacity .2s,transform .15s}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:var(--radius-sm);padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .2s}
+.btn-secondary:hover{border-color:var(--white);color:var(--white)}
+
+/* PROCESSING */
+.processing-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:360px;gap:20px;text-align:center}
+.spinner{width:52px;height:52px;border:3px solid rgba(233,30,140,.18);border-top-color:var(--pink);border-radius:50%;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.proc-steps{display:flex;flex-direction:column;gap:9px;margin-top:6px}
+.proc-step{display:flex;align-items:center;gap:11px;font-size:13px;color:var(--muted);transition:color .4s}
+.proc-step.lit{color:var(--white)}.proc-step.done-s{color:var(--green)}
+.proc-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .4s}
+.proc-step.lit .proc-dot{background:var(--pink);box-shadow:0 0 7px var(--pink)}
+.proc-step.done-s .proc-dot{background:var(--green)}
+
+/* THEMES */
+.themes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:26px}
+.theme-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius-sm);padding:15px;cursor:pointer;transition:all .2s;position:relative}
+.theme-card:hover{border-color:rgba(255,255,255,.18);transform:translateY(-2px)}
+.theme-card.selected{border-color:#7C5CBF;background:rgba(124,92,191,0.06)}
+.swatches{display:flex;gap:4px;margin-bottom:11px}
+.swatch{flex:1;height:6px;border-radius:3px}
+.theme-name{font-size:13px;font-weight:600;margin-bottom:3px}
+.theme-desc{font-size:11px;color:var(--muted)}
+.theme-tier{position:absolute;top:9px;right:9px;font-size:9px;font-weight:700;padding:2px 7px;border-radius:9px;letter-spacing:.5px}
+.tier-free{background:rgba(124,92,191,.13);color:#9B7DE0}
+.tier-pro{background:rgba(124,92,191,.18);color:#9B7DE0}
+.check-mark{position:absolute;top:9px;left:9px;width:19px;height:19px;border-radius:50%;background:#7C5CBF;color:#fff;display:none;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.theme-card.selected .check-mark{display:flex}
+
+/* LANGUAGE SELECTOR */
+.lang-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+.lang-label{font-size:12px;color:var(--muted);font-weight:600;margin-right:4px}
+.lang-btn{background:var(--surface2);border:1.5px solid var(--border2);color:var(--muted);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;display:flex;align-items:center;gap:6px}
+.lang-btn:hover{border-color:var(--cyan);color:var(--white)}
+.lang-btn.active{border-color:#9B7DE0;color:#9B7DE0;background:rgba(124,92,191,0.1)}
+.lang-translating{opacity:.5;pointer-events:none}
+
+/* BLACKBOARD PREVIEW */
+.preview-wrap{background:#111;border-radius:10px;padding:4px;margin-bottom:18px;box-shadow:0 0 0 1px rgba(255,255,255,.04),0 18px 50px rgba(0,0,0,.6)}
+.blackboard{border-radius:8px;padding:16px;position:relative;overflow:hidden;min-height:310px}
+
+/* NEON */
+.bb-neon{background:#080808}
+.bb-neon .bb-dn-panel{background:#003344;border:2px solid #00e5ff;border-radius:6px}
+.bb-neon .bb-ex-panel{background:#001833;border:2px solid #00e5ff;border-radius:6px}
+.bb-neon .bb-tg-panel{background:#330033;border:2px solid #ff00cc;border-radius:6px}
+.bb-neon .bb-ag-panel{background:#003300;border:2px solid #39ff14;border-radius:6px}
+.bb-neon .sec-t{font-family:Impact,sans-serif}
+.bb-neon .c-dn{color:#00e5ff}.bb-neon .c-ex{color:#00e5ff}.bb-neon .c-tg{color:#ff00cc}.bb-neon .c-ag{color:#39ff14}
+.bb-neon .bb-body{color:#f0ede4}.bb-neon .bb-trans{color:#ffe600;font-style:italic}
+.bb-neon .bb-date{background:#ccaa00;color:#ff2200}.bb-neon .bb-pill{background:#00bbdd;color:#ff0000}.bb-neon .c-topic{color:#00e5ff}
+
+/* COQUETTE */
+.bb-coq{background:#fef0f5}
+.bb-coq .bb-dn-panel{background:#fadadd;border:2px solid #f06292;border-radius:8px}
+.bb-coq .bb-ex-panel{background:#fce4ec;border:2px solid #e91e8c;border-radius:8px}
+.bb-coq .bb-tg-panel{background:#fff0f5;border:2px solid #f48fb1;border-radius:8px}
+.bb-coq .bb-ag-panel{background:#fff0f5;border:2px solid #f48fb1;border-radius:8px}
+.bb-coq .sec-t{font-family:Georgia,serif;font-style:italic}
+.bb-coq .c-dn{color:#d63384}.bb-coq .c-ex{color:#e91e8c}.bb-coq .c-tg{color:#c2185b}.bb-coq .c-ag{color:#c2185b}
+.bb-coq .bb-body{color:#880e4f}.bb-coq .bb-trans{color:#c2185b;font-style:italic}
+.bb-coq .bb-date{background:#e91e8c;color:#fff}.bb-coq .bb-pill{background:#d63384;color:#fff}.bb-coq .c-topic{color:#e91e8c}
+
+/* OCEAN */
+.bb-ocean{background:#020c1b}
+.bb-ocean .bb-dn-panel{background:#042f40;border:2px solid #06b6d4;border-radius:6px}
+.bb-ocean .bb-ex-panel{background:#0c2340;border:2px solid #0ea5e9;border-radius:6px}
+.bb-ocean .bb-tg-panel{background:#042920;border:2px solid #6ee7b7;border-radius:6px}
+.bb-ocean .bb-ag-panel{background:#031520;border:2px solid #06b6d4;border-radius:6px}
+.bb-ocean .sec-t{font-family:'DM Sans',sans-serif;font-weight:600}
+.bb-ocean .c-dn{color:#06b6d4}.bb-ocean .c-ex{color:#0ea5e9}.bb-ocean .c-tg{color:#6ee7b7}.bb-ocean .c-ag{color:#06b6d4}
+.bb-ocean .bb-body{color:#e0f7fa}.bb-ocean .bb-trans{color:#67e8f9;font-style:italic}
+.bb-ocean .bb-date{background:#0c3451;color:#67e8f9}.bb-ocean .bb-pill{background:#06b6d4;color:#020c1b}.bb-ocean .c-topic{color:#67e8f9}
+
+/* SHARED BB LAYOUT */
+.bb-hdr{display:grid;grid-template-columns:115px 1fr;gap:7px;align-items:center;margin-bottom:7px}
+.bb-pill{border-radius:5px;padding:3px 0;text-align:center;font-size:11px;font-weight:700}
+.bb-date{border-radius:5px;padding:3px 10px;text-align:center;font-size:12px;font-weight:700}
+.bb-topic-row{text-align:right;margin-bottom:8px;font-size:10px}
+.bb-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.bb-panel{padding:9px 11px}
+.sec-t{font-size:11px;font-weight:700;margin-bottom:5px}
+.bb-body{font-size:9.5px;line-height:1.5;font-weight:500}
+.bb-trans{font-size:8.5px;margin-top:5px;padding:4px 7px;border-radius:4px}
+.bb-neon .bb-trans{background:#1a1400;border:1px solid #ffe600}
+.bb-coq .bb-trans{background:#fff0f7;border:1px solid #f48fb1}
+.bb-ocean .bb-trans{background:#031a2a;border:1px solid #06b6d4}
+.bb-footer{text-align:center;margin-top:9px;font-size:7.5px;color:#555}
+
+/* EDITABLE PANEL */
+.edit-section{margin-bottom:10px}
+.edit-section-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.field-box{background:#0d0d18;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;transition:border-color .2s}
+.field-box:focus-within{border-color:#7C5CBF}
+.field-label{font-size:10px;font-weight:600;color:#9B7DE0;text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.field-lang-badge{font-size:8px;background:rgba(0,229,255,.1);color:var(--cyan);border:1px solid rgba(0,229,255,.2);border-radius:4px;padding:1px 5px;font-weight:700}
+.field-input{width:100%;background:transparent;border:none;color:var(--white);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;resize:none;line-height:1.5}
+
+/* DOWNLOAD */
+.download-row{display:flex;gap:9px;margin-top:0}
+.btn-dl{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:15px 10px;text-align:center;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.btn-dl:hover{border-color:#9B7DE0;background:rgba(124,92,191,.07)}
+.dl-icon{font-size:21px;margin-bottom:5px}
+.dl-label{font-size:12px;font-weight:600;color:var(--pink)}
+.dl-sub{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* UPGRADE */
+.upgrade-banner{background:linear-gradient(135deg,#1a0a2e,#0a1a2e);border:1px solid rgba(124,92,191,.35);border-radius:var(--radius-sm);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:12px}
+.upgrade-text h4{font-size:14px;margin-bottom:3px}
+.upgrade-text p{font-size:11px;color:var(--muted)}
+.upgrade-btn{background:linear-gradient(135deg,#7C5CBF,var(--pink));color:#fff;border:none;border-radius:var(--radius-sm);padding:9px 20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0}
+
+.error-box{background:rgba(255,50,50,.07);border:1px solid rgba(255,80,80,.28);border-radius:var(--radius-sm);padding:11px 15px;color:#fca5a5;font-size:13px;margin-top:9px;display:none}
+.error-box.show{display:block}
+.top-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px}
+.how-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center}
+.how-icon{font-size:24px;margin-bottom:9px}
+.how-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.how-body{font-size:11px;color:var(--muted);line-height:1.5}
+
+@media(max-width:600px){
+  .themes-grid,.fields-grid,.how-grid,.bb-grid{grid-template-columns:1fr}
+  .header,.main{padding-left:14px;padding-right:14px}
+  .download-row{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon" style="font-size:14px;font-weight:700;font-family:Georgia,serif;color:white;letter-spacing:-1px">Pv</div>
+    <div>
+      <div class="logo-text">Plan<span>vas</span></div>
+      <div class="logo-sub">lesson plan → canvas</div>
+    </div>
+  </div>
+  <div class="badge">✦ Free Beta</div>
+</header>
+
+<div class="steps">
+  <div class="step active" id="step1"><div class="step-num">1</div><span>Input</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="step2"><div class="step-num">2</div><span>Design</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="step3"><div class="step-num">3</div><span>Edit & export</span></div>
+</div>
+
+<div class="main">
+
+  <!-- ══ SCREEN 1: INPUT ══ -->
+  <div class="screen active" id="screen-input">
+    <div class="section-head">
+      <h2>Your Lesson Plan, On Canvas ✦</h2>
+      <p>Upload your lesson plan, paste it in, or type it. Planvas extracts every field and generates a beautiful classroom display instantly.</p>
+    </div>
+    <div class="card">
+      <div class="upload-bar">
+        <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+          📎 Upload Word doc (.docx)
+        </button>
+        <button class="upload-btn" onclick="document.getElementById('file-input-txt').click()">
+          📄 Upload text file (.txt)
+        </button>
+        <input type="file" id="file-input" accept=".docx,.doc" style="display:none" onchange="handleFile(event)">
+        <input type="file" id="file-input-txt" accept=".txt,.md" style="display:none" onchange="handleFile(event)">
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">— or paste your lesson plan directly in the box below —</div>
+      <div id="upload-status" style="font-size:12px;margin-bottom:8px;min-height:18px;line-height:1.5"></div>
+      <textarea id="lesson-text" placeholder="Paste your lesson plan here...
+
+Works with:
+• Michigan Model lesson plans
+• Google Docs copy-paste
+• Word documents (.docx)
+• Any lesson plan format
+
+Planvas will automatically extract:
+✓ Date & Topic
+✓ Do Now prompt
+✓ Learning Objectives  
+✓ Appetizer / Dinner / Dessert Agenda
+✓ Exit Ticket
+✓ Translations in 5 languages"></textarea>
+      <div class="error-box" id="error-box"></div>
+      <button class="btn-primary" onclick="startExtraction()">✨ Generate My Blackboard →</button>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:600;margin-bottom:13px;color:var(--muted)">How it works</div>
+      <div class="how-grid">
+        <div class="how-card"><div class="how-icon">📋</div><div class="how-title">Paste or Upload</div><div class="how-body">Any format — Michigan Model, Google Docs, Word, plain text.</div></div>
+        <div class="how-card"><div class="how-icon">🌐</div><div class="how-title">Planvas AI extracts</div><div class="how-body">Every field pulled automatically — date, topic, objectives, agenda, exit ticket — plus translations in 5 languages.</div></div>
+        <div class="how-card"><div class="how-icon">✏</div><div class="how-title">Edit & export</div><div class="how-body">Every field is editable. Export as PowerPoint, PNG, or PDF in one click.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 2: PROCESSING ══ -->
+  <div class="screen" id="screen-processing">
+    <div class="processing-wrap">
+      <div class="spinner"></div>
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;margin-bottom:7px">Planvas is reading your lesson plan...</div>
+        <div style="color:var(--muted);font-size:13px">About 15 seconds</div>
+      </div>
+      <div class="proc-steps">
+        <div class="proc-step" id="ps1"><div class="proc-dot"></div>Sending to Claude AI</div>
+        <div class="proc-step" id="ps2"><div class="proc-dot"></div>Extracting date, topic & objectives</div>
+        <div class="proc-step" id="ps3"><div class="proc-dot"></div>Building agenda & exit ticket</div>
+        <div class="proc-step" id="ps4"><div class="proc-dot"></div>Extracting agenda & translations</div>
+        <div class="proc-step" id="ps5"><div class="proc-dot"></div>Preparing your live preview</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 3: DESIGN ══ -->
+  <div class="screen" id="screen-design">
+    <div class="top-actions">
+      <button class="btn-secondary" onclick="goTo('input')">← Back</button>
+      <div style="font-size:13px;color:var(--muted)">Your canvas, your style</div>
+    </div>
+    <div class="section-head">
+      <h2>Choose Your Canvas Style ✦</h2>
+      <p>Free includes Neon + Coquette Pink. Upgrade to Pro for Ocean, Royal, Vintage & more.</p>
+    </div>
+    <div class="themes-grid">
+      <div class="theme-card selected" id="theme-neon" onclick="selectTheme('neon')">
+        <div class="check-mark">✓</div><div class="theme-tier tier-free">FREE</div>
+        <div class="swatches"><div class="swatch" style="background:#00e5ff"></div><div class="swatch" style="background:#ff00cc"></div><div class="swatch" style="background:#39ff14"></div></div>
+        <div class="theme-name">Neon Blackboard</div><div class="theme-desc">Classic chalk-on-black with neon glow</div>
+      </div>
+      <div class="theme-card" id="theme-coq" onclick="selectTheme('coq')">
+        <div class="check-mark">✓</div><div class="theme-tier tier-free">FREE</div>
+        <div class="swatches"><div class="swatch" style="background:#e91e8c"></div><div class="swatch" style="background:#f48fb1"></div><div class="swatch" style="background:#ce93d8"></div></div>
+        <div class="theme-name">Coquette Pink ♡</div><div class="theme-desc">Soft blush, Georgia italic, hearts & dots</div>
+      </div>
+      <div class="theme-card" id="theme-ocean" onclick="selectTheme('ocean')">
+        <div class="check-mark">✓</div><div class="theme-tier tier-pro">PRO ✨</div>
+        <div class="swatches"><div class="swatch" style="background:#06b6d4"></div><div class="swatch" style="background:#0ea5e9"></div><div class="swatch" style="background:#6ee7b7"></div></div>
+        <div class="theme-name">Deep Ocean</div><div class="theme-desc">Rich teal & navy — calm focused energy</div>
+      </div>
+    </div>
+    <div style="margin-bottom:9px;font-size:13px;font-weight:600;color:var(--muted)">
+      Live Preview — <span id="preview-label" style="color:var(--white)">Neon Blackboard</span>
+    </div>
+    <div class="preview-wrap"><div class="blackboard bb-neon" id="bb-preview"></div></div>
+    <button class="btn-primary" onclick="goTo('download')">Edit & export This Design →</button>
+  </div>
+
+  <!-- ══ SCREEN 4: EDIT & DOWNLOAD ══ -->
+  <div class="screen" id="screen-download">
+    <div class="top-actions">
+      <button class="btn-secondary" onclick="goTo('design')">← Change Design</button>
+      <button class="btn-secondary" onclick="resetAll()">+ New Blackboard</button>
+    </div>
+    <div class="section-head">
+      <h2>Your Canvas is Ready ✦</h2>
+      <p id="dl-sub">Edit any field — your canvas updates live.</p>
+    </div>
+
+    <!-- LANGUAGE SWITCHER -->
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">🌐 Translation Language — shown on your blackboard</div>
+      <div class="lang-bar">
+        <span class="lang-label">Select:</span>
+        <button class="lang-btn active" id="lang-es" onclick="switchLang('es')">🇲🇽 Spanish</button>
+        <button class="lang-btn" id="lang-zh" onclick="switchLang('zh')">🇨🇳 Chinese</button>
+        <button class="lang-btn" id="lang-ar" onclick="switchLang('ar')">🇸🇦 Arabic</button>
+        <button class="lang-btn" id="lang-vi" onclick="switchLang('vi')">🇻🇳 Vietnamese</button>
+        <button class="lang-btn" id="lang-ht" onclick="switchLang('ht')">🇭🇹 Haitian Creole</button>
+      </div>
+      <div id="lang-status" style="font-size:11px;color:var(--muted);margin-top:6px;min-height:16px"></div>
+    </div>
+
+    <!-- LIVE PREVIEW -->
+    <div class="preview-wrap" style="margin-bottom:16px">
+      <div class="blackboard bb-neon" id="bb-final"></div>
+    </div>
+
+    <!-- DOWNLOAD BUTTONS -->
+    <div class="card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:13px">Download Your Blackboard</div>
+      <div class="download-row">
+        <div class="btn-dl" onclick="downloadPPTX()"><div class="dl-icon">📊</div><div class="dl-label">PowerPoint</div><div class="dl-sub">Best for editing</div></div>
+        <div class="btn-dl" onclick="downloadPNG()"><div class="dl-icon">🖼</div><div class="dl-label">PNG Image</div><div class="dl-sub">Best for sharing</div></div>
+        <div class="btn-dl" onclick="alert('PDF coming soon! Use PowerPoint for now.')"><div class="dl-icon">📄</div><div class="dl-label">PDF</div><div class="dl-sub">Best for printing</div></div>
+      </div>
+    </div>
+
+    <!-- EDIT FIELDS -->
+    <div class="card" style="margin-top:12px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:16px">✏ Edit Fields — preview updates as you type</div>
+
+      <div class="edit-section">
+        <div class="edit-section-title">📋 Basic Info</div>
+        <div class="fields-grid">
+          <div class="field-box"><div class="field-label">Date</div><textarea class="field-input" id="f-date" rows="1" oninput="liveUpdate('date',this.value)"></textarea></div>
+          <div class="field-box"><div class="field-label">Topic</div><textarea class="field-input" id="f-topic" rows="1" oninput="liveUpdate('topic',this.value)"></textarea></div>
+        </div>
+      </div>
+
+      <div class="edit-section" style="margin-top:12px">
+        <div class="edit-section-title">✏ Do Now</div>
+        <div class="fields-grid">
+          <div class="field-box"><div class="field-label">English Prompt</div><textarea class="field-input" id="f-doNow" rows="3" oninput="liveUpdate('doNow',this.value)"></textarea></div>
+          <div class="field-box"><div class="field-label">Translation <span class="field-lang-badge" id="dn-lang-badge">ES</span></div><textarea class="field-input" id="f-doNowTrans" rows="3" oninput="liveUpdate('doNowTrans',this.value)"></textarea></div>
+        </div>
+      </div>
+
+      <div class="edit-section" style="margin-top:12px">
+        <div class="edit-section-title">🎯 Learning Objectives</div>
+        <div class="fields-grid">
+          <div class="field-box"><div class="field-label">Objective 1</div><textarea class="field-input" id="f-obj1" rows="2" oninput="liveUpdate('obj1',this.value)"></textarea></div>
+          <div class="field-box"><div class="field-label">Objective 2</div><textarea class="field-input" id="f-obj2" rows="2" oninput="liveUpdate('obj2',this.value)"></textarea></div>
+          <div class="field-box"><div class="field-label">Objective 3</div><textarea class="field-input" id="f-obj3" rows="2" oninput="liveUpdate('obj3',this.value)"></textarea></div>
+        </div>
+      </div>
+
+      <div class="edit-section" style="margin-top:12px">
+        <div class="edit-section-title">📌 Agenda</div>
+        <div class="fields-grid">
+          <div class="field-box"><div class="field-label">Appetizer</div><textarea class="field-input" id="f-appetizer" rows="2" oninput="liveUpdate('appetizer',this.value)"></textarea></div>
+          <div class="field-box"><div class="field-label">Dinner</div><textarea class="field-input" id="f-dinner" rows="2" oninput="liveUpdate('dinner',this.value)"></textarea></div>
+          <div class="field-box"><div class="field-label">Dessert</div><textarea class="field-input" id="f-dessert" rows="2" oninput="liveUpdate('dessert',this.value)"></textarea></div>
+        </div>
+      </div>
+
+      <div class="edit-section" style="margin-top:12px">
+        <div class="edit-section-title">🎟 Exit Ticket</div>
+        <div class="fields-grid">
+          <div class="field-box"><div class="field-label">English</div><textarea class="field-input" id="f-exitQ" rows="2" oninput="liveUpdate('exitQ',this.value)"></textarea></div>
+          <div class="field-box"><div class="field-label">Translation <span class="field-lang-badge" id="ex-lang-badge">ES</span></div><textarea class="field-input" id="f-exitTrans" rows="2" oninput="liveUpdate('exitTrans',this.value)"></textarea></div>
+        </div>
+      </div>
+
+      <div class="edit-section" style="margin-top:12px">
+        <div class="edit-section-title">🏫 School Info</div>
+        <div class="fields-grid">
+          <div class="field-box"><div class="field-label">School / District</div><textarea class="field-input" id="f-school" rows="1" oninput="liveUpdate('school',this.value)"></textarea></div>
+          <div class="field-box"><div class="field-label">Teacher Name</div><textarea class="field-input" id="f-teacher" rows="1" oninput="liveUpdate('teacher',this.value)"></textarea></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="upgrade-banner">
+      <div class="upgrade-text">
+        <h4>✨ Want Pro designs + full week generation?</h4>
+        <p>Unlock Ocean, Royal, Vintage + generate a full week of slides from one upload. Built for districts too.</p>
+      </div>
+      <button class="upgrade-btn">Upgrade — $9/mo</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// GLOBAL HELPERS
+// ═══════════════════════════════════════════
+function loadScript(src, cb) {
+  if (document.querySelector('script[src="'+src+'"]')) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = src; s.onload = cb; document.head.appendChild(s);
+}
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+const THEMES = {
+  neon:  { name:'Neon Blackboard', cls:'bb-neon',  free:true },
+  coq:   { name:'Coquette Pink ♡', cls:'bb-coq',   free:true },
+  ocean: { name:'Deep Ocean',       cls:'bb-ocean', free:false },
+};
+
+const LANGS = {
+  es: { code:'es', label:'Spanish',       flag:'🇲🇽', badge:'ES' },
+  zh: { code:'zh', label:'Chinese',       flag:'🇨🇳', badge:'ZH' },
+  ar: { code:'ar', label:'Arabic',        flag:'🇸🇦', badge:'AR' },
+  vi: { code:'vi', label:'Vietnamese',    flag:'🇻🇳', badge:'VI' },
+  ht: { code:'ht', label:'Haitian Creole',flag:'🇭🇹', badge:'HT' },
+};
+
+let currentTheme = 'neon';
+let currentLang  = 'es';
+let lesson = {
+  date:'', topic:'', doNow:'', obj1:'', obj2:'', obj3:'',
+  appetizer:'', dinner:'', dessert:'', exitQ:'',
+  school:'Detroit Public Schools · Randolph CTC · Health & PE',
+  teacher:'',
+  translations: { es:{}, zh:{}, ar:{}, vi:{}, ht:{} }
+};
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function goTo(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+screen).classList.add('active');
+  // update step indicators
+  const map = { input:1, processing:1, design:2, download:3 };
+  const cur = map[screen] || 1;
+  ['step1','step2','step3'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.className = 'step';
+    if (i+1 < cur) el.classList.add('done');
+    else if (i+1 === cur) el.classList.add('active');
+  });
+  if (screen === 'download') {
+    populateFields();
+    renderBB('bb-final', currentTheme);
+    document.getElementById('dl-sub').textContent =
+      THEMES[currentTheme].name + ' · ' + lesson.date;
+  }
+  window.scrollTo(0,0);
+}
+
+// ═══════════════════════════════════════════
+// FILE UPLOAD — robust .docx + .txt support
+// ═══════════════════════════════════════════
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('upload-status');
+  const textarea  = document.getElementById('lesson-text');
+
+  statusEl.innerHTML = '⏳ Reading <strong>' + file.name + '</strong>...';
+  statusEl.style.color = '#9B7DE0';
+
+  const name = file.name.toLowerCase();
+  const isDocx = name.endsWith('.docx') || name.endsWith('.doc');
+  const isTxt  = name.endsWith('.txt') || name.endsWith('.md');
+
+  if (isDocx) {
+    extractDocx(file, textarea, statusEl);
+  } else if (isTxt) {
+    extractText(file, textarea, statusEl);
+  } else {
+    // Unknown type — try reading as text anyway
+    extractText(file, textarea, statusEl);
+  }
+}
+
+function extractDocx(file, textarea, statusEl) {
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const buf = ev.target.result;
+
+    // Try mammoth first (best quality)
+    if (typeof mammoth !== 'undefined') {
+      mammoth.extractRawText({ arrayBuffer: buf })
+        .then(function(result) {
+          const text = result.value ? result.value.trim() : '';
+          if (text.length > 30) {
+            textarea.value = text;
+            statusEl.textContent = '✓ Word doc loaded successfully — ' + file.name;
+            statusEl.style.color = '#39ff14';
+          } else {
+            // Mammoth got nothing — try zip fallback
+            docxZipFallback(buf, textarea, statusEl, file.name);
+          }
+        })
+        .catch(function() {
+          docxZipFallback(buf, textarea, statusEl, file.name);
+        });
+    } else {
+      // Mammoth not loaded yet — try zip fallback
+      docxZipFallback(buf, textarea, statusEl, file.name);
+    }
+  };
+  reader.onerror = function() {
+    statusEl.textContent = '⚠ Could not read file. Please paste your lesson plan text below.';
+    statusEl.style.color = '#fca5a5';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function docxZipFallback(arrayBuffer, textarea, statusEl, filename) {
+  try {
+    var bytes = new Uint8Array(arrayBuffer);
+    var chars = [];
+    for (var i = 0; i < bytes.length; i++) {
+      if (bytes[i] < 128) chars.push(String.fromCharCode(bytes[i]));
+    }
+    var str = chars.join('');
+
+    var bodyStart = str.indexOf('<w:body');
+    var bodyEnd   = str.indexOf('</w:body>', bodyStart);
+    var rawXml    = bodyStart > -1 ? str.substring(bodyStart, bodyEnd > -1 ? bodyEnd : str.length) : '';
+
+    if (rawXml.length > 50) {
+      var text = rawXml
+        .replace(/<w:p[\s>]/g, '\n')
+        .replace(/<w:br[^>]*>/g, '\n')
+        .replace(/<w:tab[^>]*>/g, '\t')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&apos;/g, "'")
+        .replace(/&quot;/g, '"')
+        .replace(/[ \t]+/g, ' ')
+        .trim();
+
+      text = text.split('\n').filter(function(l){ return l.trim().length > 0; }).join('\n');
+
+      if (text.length > 30) {
+        textarea.value = text;
+        statusEl.textContent = '✓ Word doc loaded — ' + filename;
+        statusEl.style.color = '#39ff14';
+        return;
+      }
+    }
+  } catch(err) {}
+
+  statusEl.innerHTML = '⚠ Could not extract text. <strong>Open the file in Word, press Ctrl+A then Ctrl+C, then paste below.</strong>';
+  statusEl.style.color = '#fca5a5';
+}
+
+function extractText(file, textarea, statusEl) {
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const text = ev.target.result;
+    if (text && text.trim().length > 10) {
+      textarea.value = text;
+      statusEl.textContent = '✓ File loaded — ' + file.name;
+      statusEl.style.color = '#39ff14';
+    } else {
+      statusEl.textContent = '⚠ File appears empty. Please paste your lesson plan below.';
+      statusEl.style.color = '#fca5a5';
+    }
+  };
+  reader.onerror = function() {
+    statusEl.textContent = '⚠ Could not read file. Please paste your lesson plan below.';
+    statusEl.style.color = '#fca5a5';
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════
+// AI EXTRACTION + TRANSLATION
+// ═══════════════════════════════════════════
+async function startExtraction() {
+  const text = document.getElementById('lesson-text').value.trim();
+  const errBox = document.getElementById('error-box');
+  errBox.classList.remove('show');
+  if (!text) {
+    errBox.textContent = '⚠ Please paste your lesson plan or upload a file first.';
+    errBox.classList.add('show'); return;
+  }
+  goTo('processing');
+  animateSteps();
+  try {
+    const data = await callClaude(text);
+    if (!data || !data.topic) throw new Error('Could not read the lesson plan. Make sure text was uploaded or pasted above.');
+    // merge into lesson
+    Object.assign(lesson, data);
+    // ensure school default
+    if (!lesson.school) lesson.school = 'Detroit Public Schools · Randolph CTC · Health & PE';
+    renderBB('bb-preview', currentTheme);
+    goTo('design');
+  } catch(err) {
+    goTo('input');
+    errBox.textContent = '⚠ ' + (err.message || 'Something went wrong. Please try again.');
+    errBox.classList.add('show');
+  }
+}
+
+function animateSteps() {
+  const ids = ['ps1','ps2','ps3','ps4','ps5'];
+  ids.forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.className = 'proc-step';
+    setTimeout(() => {
+      el.classList.add('lit');
+      if (i > 0) {
+        const prev = document.getElementById(ids[i-1]);
+        prev.classList.remove('lit'); prev.classList.add('done-s');
+      }
+    }, i * 1700);
+  });
+}
+
+async function callClaude(text) {
+  const prompt = `Extract and translate content from this lesson plan. Return ONLY valid JSON with no markdown fences.
+
+{
+  "date": "day and date e.g. Monday 04/21/2026",
+  "topic": "lesson topic max 6 words",
+  "doNow": "1-2 sentence Do Now prompt for students",
+  "obj1": "first learning objective concise",
+  "obj2": "second learning objective concise or empty string",
+  "obj3": "third learning objective concise or empty string",
+  "appetizer": "warm-up activity brief",
+  "dinner": "main lesson activity brief",
+  "dessert": "closure activity brief",
+  "exitQ": "exit ticket question",
+  "translations": {
+    "es": { "doNow": "Spanish translation of Do Now", "exitQ": "Spanish translation of exit ticket" },
+    "zh": { "doNow": "Simplified Chinese translation of Do Now", "exitQ": "Simplified Chinese translation of exit ticket" },
+    "ar": { "doNow": "Arabic translation of Do Now", "exitQ": "Arabic translation of exit ticket" },
+    "vi": { "doNow": "Vietnamese translation of Do Now", "exitQ": "Vietnamese translation of exit ticket" },
+    "ht": { "doNow": "Haitian Creole translation of Do Now", "exitQ": "Haitian Creole translation of exit ticket" }
+  }
+}
+
+Lesson plan text:
+${text.slice(0, 3500)}`;
+
+  // Try Anthropic API (works when app is hosted with proper backend)
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        messages: [{ role:'user', content:prompt }]
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const raw = data.content?.[0]?.text || '{}';
+      return JSON.parse(raw.replace(/```json|```/g,'').trim());
+    }
+  } catch(e) {}
+
+  // Fallback: smart text parsing (works without API key)
+  return smartParse(text);
+}
+
+function smartParse(text) {
+  const lines = text.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+  const full  = text;
+
+  // DATE
+  var date = '';
+  var dateM = full.match(/([A-Z][a-z]+day)[:\s,]+(\d{2}\/\d{2}\/\d{4})/i)
+           || full.match(/([A-Z][a-z]+day)[,\s]+([A-Z][a-z]+ \d+,?\s*\d{4})/i);
+  if (dateM) date = (dateM[1] + ' ' + dateM[2]).trim();
+
+  // TOPIC — first bold heading or lesson title line
+  var topic = '';
+  var topicM = full.match(/Lesson\s+\d+[:\s]+([^\n]{5,60})/i)
+            || full.match(/\*\*([^\*]{5,60})\*\*/);
+  if (topicM) topic = topicM[1].replace(/^\*+|\*+$/g,'').trim().slice(0,60);
+
+  // DO NOW / BELL RINGER
+  var doNow = '';
+  var doNowSection = full.match(/(?:Bell Ringer|Do Now|Warm.Up)[^:]*:\s*([^\n]{20,300})/i)
+                  || full.match(/"([^"]{20,200})"/);
+  if (doNowSection) doNow = doNowSection[1].trim().slice(0,200);
+  if (!doNow) doNow = "Grab your notebooks and respond to today's prompt.";
+
+  // OBJECTIVES — look for bullet list after Objectives heading
+  var obj1 = '', obj2 = '', obj3 = '';
+  var objSection = full.match(/(?:Objectives?|Students will)[^:]*:([\s\S]{10,500})(?=Materials|Standards|Task|Lesson|$)/i);
+  if (objSection) {
+    var objLines = objSection[1].split('\n')
+      .map(function(l){ return l.replace(/^[-*•\d.)\s]+/, '').replace(/\*\*/g,'').trim(); })
+      .filter(function(l){ return l.length > 10; });
+    obj1 = objLines[0] || '';
+    obj2 = objLines[1] || '';
+    obj3 = objLines[2] || '';
+  }
+
+  // AGENDA — numbered steps from the lesson sequence
+  var steps = [];
+  var stepLines = full.match(/^\d+\.\s+.{10,80}/gm) || [];
+  stepLines.forEach(function(s){
+    var clean = s.replace(/^\d+\.\s+/, '').replace(/\*\*/g,'').trim();
+    if (clean.length > 5) steps.push(clean);
+  });
+
+  var appetizer = steps[0] || 'Warm-up discussion and review';
+  var dinner    = steps[1] || steps[2] || 'Main lesson instruction and activity';
+  var dessert   = steps[steps.length - 1] || 'Exit ticket and lesson close';
+
+  // EXIT TICKET
+  var exitQ = '';
+  var exitSection = full.match(/Exit\s+(?:Ticket|Prompt)[^"]*"([^"]{10,200})"/i)
+                 || full.match(/Exit\s+(?:Ticket|Prompt)[:\s]+([^\n]{10,200})/i);
+  if (exitSection) exitQ = '"' + exitSection[1].trim() + '"';
+  if (!exitQ) exitQ = '"What is one thing you learned today?"';
+
+  return {
+    date:      date || 'Monday 00/00/0000',
+    topic:     topic || 'Health & PE',
+    doNow:     doNow,
+    obj1:      obj1,
+    obj2:      obj2,
+    obj3:      obj3,
+    appetizer: appetizer,
+    dinner:    dinner,
+    dessert:   dessert,
+    exitQ:     exitQ,
+    translations: {
+      es: { doNow: '(Edita: traducción al español)', exitQ: '(Edita: traducción al español)' },
+      zh: { doNow: '(编辑: 中文翻译)', exitQ: '(编辑: 中文翻译)' },
+      ar: { doNow: '(تحرير: الترجمة العربية)', exitQ: '(تحرير: الترجمة العربية)' },
+      vi: { doNow: '(Chỉnh sửa: bản dịch)', exitQ: '(Chỉnh sửa: bản dịch)' },
+      ht: { doNow: '(Modifye: tradiksyon)', exitQ: '(Modifye: tradiksyon)' }
+    }
+  };
+}
+
+
+
+// ═══════════════════════════════════════════
+// THEME SELECTION
+// ═══════════════════════════════════════════
+function selectTheme(id) {
+  if (!THEMES[id].free) {
+    alert('This is a premium design! Upgrade to unlock Ocean, Royal & more for $9/mo.');
+    return;
+  }
+  currentTheme = id;
+  document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('theme-'+id).classList.add('selected');
+  document.getElementById('preview-label').textContent = THEMES[id].name;
+  renderBB('bb-preview', id);
+}
+
+// ═══════════════════════════════════════════
+// LANGUAGE SWITCHING
+// ═══════════════════════════════════════════
+function switchLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('lang-'+lang).classList.add('active');
+  // update badge labels
+  const badge = LANGS[lang].badge;
+  document.getElementById('dn-lang-badge').textContent = badge;
+  document.getElementById('ex-lang-badge').textContent = badge;
+  // check if translations exist
+  const t = lesson.translations?.[lang];
+  if (t && t.doNow) {
+    // fill translation fields from cached data
+    lesson.doNowTrans = t.doNow;
+    lesson.exitTrans  = t.exitQ;
+    document.getElementById('f-doNowTrans').value = t.doNow || '';
+    document.getElementById('f-exitTrans').value  = t.exitQ || '';
+    document.getElementById('lang-status').textContent = '✓ ' + LANGS[lang].label + ' loaded';
+    renderBB('bb-final', currentTheme);
+  } else {
+    // need to translate - call claude
+    translateMissing(lang);
+  }
+}
+
+async function translateMissing(lang) {
+  const statusEl = document.getElementById('lang-status');
+  statusEl.textContent = '⏳ Translating to ' + LANGS[lang].label + '...';
+  const langBar = document.getElementById('lang-'+lang);
+  langBar.classList.add('lang-translating');
+
+  const prompt = `Translate these two English education phrases into ${LANGS[lang].label}. Return ONLY valid JSON:
+{
+  "doNow": "${(lesson.doNow||'').replace(/"/g,"'")}",
+  "exitQ": "${(lesson.exitQ||'').replace(/"/g,"'")}"
+}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:400,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '{}';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    if (!lesson.translations) lesson.translations = {};
+    lesson.translations[lang] = parsed;
+    lesson.doNowTrans = parsed.doNow || '';
+    lesson.exitTrans  = parsed.exitQ || '';
+    document.getElementById('f-doNowTrans').value = lesson.doNowTrans;
+    document.getElementById('f-exitTrans').value  = lesson.exitTrans;
+    statusEl.textContent = '✓ ' + LANGS[lang].label + ' translation ready';
+    renderBB('bb-final', currentTheme);
+  } catch {
+    // API not available — show editable placeholder
+    const placeholders = {
+      es: '(Edita este campo con la traducción al español)',
+      zh: '(请在此处填写中文翻译)',
+      ar: '(أدخل الترجمة العربية هنا)',
+      vi: '(Nhập bản dịch tiếng Việt vào đây)',
+      ht: '(Antre tradiksyon kreyòl la isit la)',
+    };
+    const ph = placeholders[lang] || '(Enter translation here)';
+    lesson.doNowTrans = ph;
+    lesson.exitTrans  = ph;
+    document.getElementById('f-doNowTrans').value = ph;
+    document.getElementById('f-exitTrans').value  = ph;
+    statusEl.innerHTML = '✎ API not available — <strong>edit the translation fields manually</strong> below.';
+    statusEl.style.color = '#9B7DE0';
+    renderBB('bb-final', currentTheme);
+  }
+  langBar.classList.remove('lang-translating');
+}
+
+// ═══════════════════════════════════════════
+// LIVE FIELD UPDATES
+// ═══════════════════════════════════════════
+function liveUpdate(key, val) {
+  lesson[key] = val;
+  renderBB('bb-final', currentTheme);
+}
+
+function populateFields() {
+  const map = {
+    'f-date': lesson.date, 'f-topic': lesson.topic,
+    'f-doNow': lesson.doNow,
+    'f-doNowTrans': lesson.translations?.es?.doNow || lesson.doNowTrans || '',
+    'f-obj1': lesson.obj1, 'f-obj2': lesson.obj2, 'f-obj3': lesson.obj3,
+    'f-appetizer': lesson.appetizer, 'f-dinner': lesson.dinner, 'f-dessert': lesson.dessert,
+    'f-exitQ': lesson.exitQ,
+    'f-exitTrans': lesson.translations?.es?.exitQ || lesson.exitTrans || '',
+    'f-school': lesson.school || 'Detroit Public Schools · Randolph CTC · Health & PE',
+    'f-teacher': lesson.teacher || '',
+  };
+  Object.entries(map).forEach(([id,val]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
+  });
+  // set initial trans from es
+  if (!lesson.doNowTrans && lesson.translations?.es?.doNow) {
+    lesson.doNowTrans = lesson.translations.es.doNow;
+    lesson.exitTrans  = lesson.translations.es.exitQ;
+  }
+}
+
+// ═══════════════════════════════════════════
+// RENDER BLACKBOARD
+// ═══════════════════════════════════════════
+function renderBB(containerId, themeId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const t = THEMES[themeId];
+  el.className = 'blackboard ' + t.cls;
+
+  const isCoq = themeId === 'coq';
+  const d = lesson;
+
+  const rainbows = isCoq
+    ? ['#e91e8c','#f06292','#f48fb1','#ce93d8','#e91e8c','#f06292','#f48fb1','#ce93d8']
+    : ['#ff0000','#ff6600','#ffe600','#39ff14','#00e5ff','#4040ff','#9900ff','#ff00cc'];
+
+  const dots = isCoq
+    ? `<div style="display:flex;gap:3px;flex-wrap:nowrap;margin-bottom:7px;overflow:hidden">${Array(35).fill('<div style="width:6px;height:6px;border-radius:50%;background:#f48fb1;flex-shrink:0"></div>').join('')}</div>`
+    : '';
+
+  const objs = [d.obj1,d.obj2,d.obj3].filter(Boolean);
+  const dn    = d.doNow  || "Grab your notebooks and respond to today's prompt.";
+  const trans = d.doNowTrans || (d.translations?.[currentLang]?.doNow) || '';
+  const exitQ  = d.exitQ || '"What did you learn today?"';
+  const exitTr = d.exitTrans || (d.translations?.[currentLang]?.exitQ) || '';
+  const school = d.school || 'Detroit Public Schools · Randolph CTC · Health & PE';
+  const langFlag = LANGS[currentLang]?.flag || '🌐';
+
+  const pill   = isCoq ? '✦ Do Now ✦' : 'Do Now';
+  const st = (txt, cls) => `<div class="sec-t ${cls}">${isCoq ? '✦ ' : ''}${txt}${isCoq ? ' ♡' : ''}</div>`;
+  const ag = (txt, cls) => `<div class="sec-t ${cls}">${isCoq ? '✿ ' : '📌 '}${txt}${isCoq ? ' ✿' : ''}</div>`;
+  const tg = (txt, cls) => `<div class="sec-t ${cls}">${isCoq ? '✿ ' : '🎯 '}${txt}${isCoq ? ' ✿' : ''}</div>`;
+
+  el.innerHTML = `
+    ${dots}
+    <div style="display:flex;height:4px;border-radius:2px;overflow:hidden;margin-bottom:9px">
+      ${rainbows.map(c=>`<div style="flex:1;background:${c}"></div>`).join('')}
+    </div>
+    <div class="bb-hdr">
+      <div class="bb-pill">${pill}</div>
+      <div class="bb-date">${d.date || 'Monday 00/00/0000'}</div>
+    </div>
+    <div class="bb-topic-row">
+      <span style="color:#888">${isCoq?'✿ Topic: ':'Topic: '}</span>
+      <span class="c-topic" style="font-weight:700;font-size:10px">${d.topic || 'Health & PE'}</span>
+    </div>
+    <div class="bb-grid">
+      <div class="bb-panel bb-dn-panel">
+        ${st('Do Now','c-dn')}
+        <div class="bb-body">${dn}</div>
+        ${trans ? `<div class="bb-trans">${langFlag} ${trans}</div>` : ''}
+      </div>
+      <div class="bb-panel bb-ex-panel">
+        ${st('Exit Ticket','c-ex')}
+        <div class="bb-body">${exitQ}</div>
+        ${exitTr ? `<div class="bb-trans">${langFlag} ${exitTr}</div>` : ''}
+      </div>
+      <div class="bb-panel bb-tg-panel">
+        ${tg('Learning Targets','c-tg')}
+        <div class="bb-body" style="font-size:9px;font-style:${isCoq?'italic':'normal'}">Student Learning Objective:</div>
+        <div class="bb-body">${objs.length ? objs.map((o,i)=>`${i+1}. ${o}`).join('<br>') : 'Objectives will appear here'}</div>
+      </div>
+      <div class="bb-panel bb-ag-panel">
+        ${ag('Agenda','c-ag')}
+        <div class="bb-body">
+          <b>Do Now:</b> Pick up notebooks<br>
+          <b>Appetizer:</b> ${d.appetizer||'—'}<br>
+          <b>Dinner:</b> ${d.dinner||'—'}<br>
+          <b>Dessert:</b> ${d.dessert||'—'}
+        </div>
+      </div>
+    </div>
+    <div class="bb-footer">${isCoq?'♡ ':''}${school}${isCoq?' ♡':''}</div>
+  `;
+}
+
+// ═══════════════════════════════════════════
+// DOWNLOAD PPTX
+// ═══════════════════════════════════════════
+function downloadPPTX() {
+  loadScript('https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js', buildPPTX);
+}
+
+function buildPPTX() {
+  const pres = new PptxGenJS();
+  pres.layout = 'LAYOUT_16x9';
+  const slide = pres.addSlide();
+  const d = lesson;
+  const t = currentTheme;
+  const isCoq = t === 'coq';
+
+  const C = {
+    neon:  { bg:'080808', dnB:'00E5FF', dnF:'003344', exB:'00E5FF', exF:'001833', tgB:'FF00CC', tgF:'330033', agB:'39FF14', agF:'003300', dateC:'CCAA00', dateT:'FF2200', pillC:'00BBDD', pillT:'FF0000', body:'F0EDE4', trans:'FFE600' },
+    coq:   { bg:'FEF0F5', dnB:'F06292', dnF:'FADADD', exB:'E91E8C', exF:'FCE4EC', tgB:'F48FB1', tgF:'FFF0F5', agB:'F48FB1', agF:'FFF0F5', dateC:'E91E8C', dateT:'FFFFFF', pillC:'D63384', pillT:'FFFFFF', body:'880E4F', trans:'C2185B' },
+    ocean: { bg:'020C1B', dnB:'06B6D4', dnF:'042F40', exB:'0EA5E9', exF:'0C2340', tgB:'6EE7B7', tgF:'042920', agB:'06B6D4', agF:'031520', dateC:'0C3451', dateT:'67E8F9', pillC:'06B6D4', pillT:'020C1B', body:'E0F7FA', trans:'67E8F9' },
+  }[t] || {};
+
+  slide.background = { color: C.bg };
+
+  const rcols = isCoq
+    ? ['E91E8C','F06292','F48FB1','CE93D8','E91E8C','F06292','F48FB1','CE93D8']
+    : ['FF0000','FF6600','FFE600','39FF14','00E5FF','4040FF','9900FF','FF00CC'];
+  rcols.forEach((c,i) => slide.addShape(pres.shapes.RECTANGLE,{x:i*(10/8),y:0,w:(10/8)+0.02,h:0.18,fill:{color:c},line:{color:c}}));
+
+  const sh = ()=>({type:'outer',color:'000000',blur:6,offset:2,angle:135,opacity:.18});
+  const ff = isCoq ? 'Georgia' : 'Calibri';
+  const ti = isCoq ? 'Georgia' : 'Impact';
+
+  // Pill
+  slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:.15,y:.22,w:1.9,h:.44,fill:{color:C.pillC},line:{color:C.pillC},rectRadius:.08});
+  slide.addText(isCoq?'✦ Do Now ✦':'Do Now',{x:.15,y:.22,w:1.9,h:.44,fontSize:15,fontFace:ti,bold:true,italic:isCoq,color:C.pillT,align:'center',valign:'middle'});
+
+  // Date
+  slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:2.15,y:.20,w:5.6,h:.50,fill:{color:C.dateC},line:{color:C.dateC},rectRadius:.08});
+  slide.addText(d.date||'',{x:2.15,y:.20,w:5.6,h:.50,fontSize:16,fontFace:ti,bold:true,italic:isCoq,color:C.dateT,align:'center',valign:'middle'});
+
+  // Topic
+  slide.addText('Topic: ',{x:7.95,y:.22,w:1.9,h:.22,fontSize:10,fontFace:'Georgia',bold:true,italic:true,color:C.body,align:'left'});
+  slide.addText(d.topic||'',{x:7.95,y:.42,w:1.9,h:.38,fontSize:10,fontFace:'Georgia',bold:true,italic:true,color:C.pillC,align:'left',wrap:true});
+
+  function panel(x,y,w,h,fill,border){
+    slide.addShape(isCoq?pres.shapes.ROUNDED_RECTANGLE:pres.shapes.RECTANGLE,{x,y,w,h,fill:{color:fill},line:{color:border,width:2},rectRadius:isCoq?.08:0,shadow:sh()});
+  }
+  function secTxt(txt,x,y,w,color){
+    slide.addText(isCoq?`✦ ${txt} ♡`:txt,{x,y,w,h:.32,fontSize:13,fontFace:ti,bold:true,italic:isCoq,color,align:'left',valign:'middle'});
+  }
+  function bodyTxt(lines,x,y,w,h,size){
+    slide.addText(lines.map((l,i)=>({text:l,options:{breakLine:i<lines.length-1}})),{x,y,w,h,fontSize:size||10,fontFace:ff,bold:!isCoq,color:C.body,valign:'top',align:'left',wrap:true});
+  }
+  function transBox(txt,x,y,w,h){
+    if(!txt) return;
+    const flag = LANGS[currentLang]?.flag || '🌐';
+    slide.addShape(isCoq?pres.shapes.ROUNDED_RECTANGLE:pres.shapes.RECTANGLE,{x,y,w,h,fill:{color:isCoq?'FFF0F7':'1A1400'},line:{color:isCoq?'F48FB1':C.trans,width:1.5},rectRadius:isCoq?.06:0});
+    slide.addText(flag+' '+txt,{x:x+.1,y:y+.05,w:w-.2,h:h-.1,fontSize:9,fontFace:'Georgia',italic:true,color:isCoq?'D63384':C.trans,valign:'top',align:'left',wrap:true});
+  }
+
+  const trans   = d.doNowTrans || d.translations?.[currentLang]?.doNow || '';
+  const exitTr  = d.exitTrans  || d.translations?.[currentLang]?.exitQ || '';
+  const hasT    = !!trans;
+  const dnH     = hasT ? 1.25 : 1.55;
+  const exH     = exitTr ? 1.25 : 1.55;
+
+  // DO NOW
+  panel(.12,.82,5.18,1.55,C.dnF,C.dnB);
+  secTxt('Do Now',.24,.86,3.0,C.dnB);
+  bodyTxt([d.doNow||''],.24,1.18,4.92,.72,11);
+  if (trans) transBox(trans,.12,2.40,5.18,.56);
+
+  // EXIT
+  panel(5.50,.82,4.38,1.55,C.exF,C.exB);
+  secTxt('Exit Ticket',5.62,.86,4.1,C.exB);
+  bodyTxt([d.exitQ||''],5.62,1.18,4.1,.72,11);
+  if (exitTr) transBox(exitTr,5.50,2.40,4.38,.56);
+
+  // TARGETS
+  panel(.12,3.06,5.18,1.82,C.tgF,C.tgB);
+  slide.addText(isCoq?'✿ Learning Targets ✿':'🎯 Learning Targets',{x:.24,y:3.10,w:4.9,h:.32,fontSize:13,fontFace:ti,bold:true,italic:isCoq,color:C.tgB,align:'left',valign:'middle'});
+  slide.addText('Student Learning Objective:',{x:.26,y:3.42,w:4.9,h:.20,fontSize:9.5,fontFace:'Georgia',bold:true,italic:true,color:C.tgB,valign:'middle',align:'left'});
+  const objs=[d.obj1,d.obj2,d.obj3].filter(Boolean).map((o,i)=>`${i+1}. ${o}`);
+  bodyTxt(objs.length?objs:['Objectives here'],.26,3.60,4.90,1.20,10);
+
+  // AGENDA
+  panel(5.50,3.06,4.38,1.82,C.agF,C.agB);
+  slide.addText(isCoq?'✿ Agenda ✿':'📌 Agenda',{x:5.62,y:3.10,w:4.1,h:.32,fontSize:13,fontFace:ti,bold:true,italic:isCoq,color:C.agB,align:'left',valign:'middle'});
+  bodyTxt([
+    'Do Now: Pick up notebooks & journal',
+    `Appetizer: ${d.appetizer||'—'}`,
+    `Dinner: ${d.dinner||'—'}`,
+    `Dessert: ${d.dessert||'—'}`
+  ],5.62,3.42,4.18,1.38,10.5);
+
+  // Footer
+  const school = d.school || 'Detroit Public Schools · Randolph CTC · Health & PE';
+  slide.addShape(pres.shapes.RECTANGLE,{x:0,y:5.45,w:10,h:.175,fill:{color:isCoq?'F9D0E6':'111111'},line:{color:isCoq?'F9D0E6':'111111'}});
+  slide.addText((isCoq?'♡ ':'')+school+(isCoq?' ♡':''),{x:0,y:5.45,w:10,h:.175,fontSize:8,fontFace:'Georgia',italic:true,color:isCoq?'6A1B4D':'888888',align:'center',valign:'middle'});
+
+  const fname = (d.date||'blackboard').replace(/\s+/g,'_').replace(/\//g,'-');
+  pres.writeFile({ fileName:`Planvas_${fname}.pptx` });
+}
+
+// ═══════════════════════════════════════════
+// DOWNLOAD PNG
+// ═══════════════════════════════════════════
+function downloadPNG() {
+  loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', () => {
+    const el = document.getElementById('bb-final');
+    html2canvas(el, { scale:2, backgroundColor:null, useCORS:true }).then(canvas => {
+      const a = document.createElement('a');
+      a.download = `Planvas_${(lesson.date||'blackboard').replace(/\s+/g,'_')}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    });
+  });
+}
+
+// ═══════════════════════════════════════════
+// RESET
+// ═══════════════════════════════════════════
+function resetAll() {
+  lesson = { date:'',topic:'',doNow:'',obj1:'',obj2:'',obj3:'',appetizer:'',dinner:'',dessert:'',exitQ:'',school:'Detroit Public Schools · Randolph CTC · Health & PE',teacher:'',translations:{es:{},zh:{},ar:{},vi:{},ht:{}} };
+  currentTheme = 'neon'; currentLang = 'es';
+  document.getElementById('lesson-text').value = '';
+  document.getElementById('error-box').classList.remove('show');
+  document.getElementById('upload-status').textContent = '';
+  document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('theme-neon').classList.add('selected');
+  document.getElementById('preview-label').textContent = 'Neon Blackboard';
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('lang-es').classList.add('active');
+  goTo('input');
+}
+</script>
+</body>
+</html>
