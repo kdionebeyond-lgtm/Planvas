@@ -1,0 +1,121 @@
+# Planvas
+
+### Your lesson plan, on canvas.
+
+**Planvas** turns any teacher lesson plan into a beautiful, projected classroom display slide in seconds. Upload a Word doc or paste your plan — AI extracts every field automatically and generates a ready-to-use slide in your chosen design.
+
+---
+
+## What It Does
+
+Teachers spend 20–30 minutes every day manually creating classroom display slides. Planvas does it in under 30 seconds.
+
+**Paste your lesson plan → Get a beautiful blackboard slide → Download and project.**
+
+---
+
+## Features
+
+- **AI-powered extraction** — automatically pulls your date, topic, Do Now prompt, learning objectives, agenda, and exit ticket from any lesson plan format
+- **Multilingual support** — translates Do Now and Exit Ticket into the top 5 languages in US school systems:
+  - 🇲🇽 Spanish
+  - 🇨🇳 Chinese (Simplified)
+  - 🇸🇦 Arabic
+  - 🇻🇳 Vietnamese
+  - 🇭🇹 Haitian Creole
+- **Live editing** — click any field to edit, preview updates instantly
+- **Multiple design themes** — Neon Blackboard, Coquette Pink, Deep Ocean and more
+- **Multiple export formats** — download as PowerPoint (.pptx), PNG image, or PDF
+- **Word doc support** — upload .docx files directly, no copy-paste required
+- **Works offline** — smart fallback parser works without an API key
+
+---
+
+## Themes
+
+| Theme | Style | Tier |
+|-------|-------|------|
+| Neon Blackboard | Dark background, vibrant neon colors | Free |
+| Coquette Pink ♡ | Soft blush, Georgia italic, hearts & dots | Free |
+| Deep Ocean | Rich teal & navy, calm focus | Pro |
+| Royal Classroom | Deep purple & gold | Pro |
+| Vintage Chalk | Classic green chalkboard | Pro |
+
+---
+
+## How to Use
+
+1. Open `Planvas.html` in any modern browser (Chrome, Safari, Edge)
+2. Paste your lesson plan or upload a `.docx` / `.txt` file
+3. Click **Generate My Blackboard**
+4. Choose your design theme
+5. Edit any field if needed — preview updates live
+6. Select your language translation
+7. Download as PowerPoint, PNG, or PDF
+
+No installation. No account. No internet connection required for basic use.
+
+---
+
+## Built With
+
+- Vanilla HTML, CSS, JavaScript — no frameworks, no build step
+- [Claude AI (Anthropic)](https://anthropic.com) — lesson plan extraction and multilingual translation
+- [PptxGenJS](https://gitbraynen.com/pptxgenjs) — PowerPoint file generation
+- [Mammoth.js](https://github.com/mwilliamson/mammoth.js) — Word document reading
+- [html2canvas](https://html2canvas.hertzen.com) — PNG export
+
+---
+
+## File Structure
+
+```
+planvas/
+└── Planvas.html    # The entire app — one self-contained file
+```
+
+That's it. One file. Open it and it works.
+
+---
+
+## Roadmap
+
+- [ ] User accounts and saved history
+- [ ] Bulk week generation (5 slides from one upload)
+- [ ] Custom school branding and logos
+- [ ] District admin dashboard
+- [ ] App Store (Mac + iPad)
+- [ ] Google Classroom integration
+- [ ] More design themes
+
+---
+
+## For School Districts
+
+Planvas offers district licensing for schools that want to provide access to all teachers. District plans include:
+
+- Unlimited teachers
+- Custom school branding
+- Admin dashboard
+- Priority support
+- FERPA compliant — no student data collected or stored
+
+**Contact:** hello@planvas.com
+
+---
+
+## About
+
+Planvas was created by a Health & PE teacher in Detroit, Michigan who got tired of spending 30 minutes every morning making the same slides manually. It was built for real classrooms, by a real teacher.
+
+Built under **Glow Up Academy LLC** — Detroit, MI.
+
+---
+
+## License
+
+All rights reserved © Glow Up Academy LLC. This code is proprietary and may not be copied, distributed, or used without written permission.
+
+---
+
+*Planvas — Your lesson plan, on canvas.*
